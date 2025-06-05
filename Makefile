@@ -1,30 +1,52 @@
 # Replace with your actual serial port (check with `ls /dev/tty.usbmodem*`)
-PORT = /dev/tty.usbmodem0000000000001
+PORT = /dev/tty.usbmodem31401
 SCRIPT = main.py
+VENV = ./venv
+PYTHON = $(VENV)/bin/python
+MPREMOTE = $(VENV)/bin/mpremote
 
-run:
-	mpremote connect $(PORT) run $(SCRIPT)
+.PHONY: run repl ls put get reset venv install help
 
-repl:
-	mpremote connect $(PORT) repl
+# Run main.py on the Pico
+run: $(MPREMOTE)
+	$(MPREMOTE) connect $(PORT) run $(SCRIPT)
 
-ls:
-	mpremote connect $(PORT) fs ls
+# Open REPL
+repl: $(MPREMOTE)
+	$(MPREMOTE) connect $(PORT) repl
 
-put:
-	mpremote connect $(PORT) fs cp $(SCRIPT) :
+# List files on Pico
+ls: $(MPREMOTE)
+	$(MPREMOTE) connect $(PORT) fs ls
 
-get:
-	mpremote connect $(PORT) fs cp :$(SCRIPT) .
+# Upload main.py to Pico
+put: $(MPREMOTE)
+	$(MPREMOTE) connect $(PORT) fs cp $(SCRIPT) :
 
-reset:
-	mpremote connect $(PORT) reset
+# Download main.py from Pico
+get: $(MPREMOTE)
+	$(MPREMOTE) connect $(PORT) fs cp :$(SCRIPT) .
+
+# Soft reset the Pico
+reset: $(MPREMOTE)
+	$(MPREMOTE) connect $(PORT) reset
+
+# Create venv if not exists
+venv:
+	python3 -m venv $(VENV)
+	$(VENV)/bin/pip install --upgrade pip
+
+# Install dependencies from requirements.txt
+install: venv
+	$(VENV)/bin/pip install -r requirements.txt
 
 help:
-	@echo "Available commands:"
-	@echo "  make run     - Run $(SCRIPT) on Pico"
-	@echo "  make repl    - Open MicroPython REPL"
-	@echo "  make ls      - List files on Pico"
-	@echo "  make put     - Upload $(SCRIPT) to Pico"
-	@echo "  make get     - Download $(SCRIPT) from Pico"
-	@echo "  make reset   - Soft reset the Pico"
+	@echo "Makefile for MicroPython Development"
+	@echo "  make venv       - Create Python virtual environment"
+	@echo "  make install    - Install dependencies from requirements.txt"
+	@echo "  make run        - Run $(SCRIPT) on Pico"
+	@echo "  make repl       - Open MicroPython REPL"
+	@echo "  make ls         - List files on Pico"
+	@echo "  make put        - Upload $(SCRIPT) to Pico"
+	@echo "  make get        - Download $(SCRIPT) from Pico"
+	@echo "  make reset      - Reset the Pico"
